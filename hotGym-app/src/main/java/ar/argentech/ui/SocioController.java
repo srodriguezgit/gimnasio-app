@@ -2,6 +2,7 @@ package ar.argentech.ui;
 
 import ar.argentech.domain.Socio;
 import ar.argentech.services.impl.SocioService;
+import java.time.LocalDate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
@@ -9,13 +10,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 
 public class SocioController {
 
-  private final MainView view;
+  private final SociosView view;
   private final SocioService socioService;
+
+  private boolean mostrandoMorosos = false;
 
   private final ObservableList<Socio> sociosObservable =
       FXCollections.observableArrayList();
 
-  public SocioController(MainView view, SocioService socioService) {
+  public SocioController(SociosView  view, SocioService socioService) {
     this.view = view;
     this.socioService = socioService;
 
@@ -46,7 +49,27 @@ public class SocioController {
   private void configurarEventos() {
     view.btnBuscar.setOnAction(e -> {
       String texto = view.txtBuscar.getText().trim();
-      sociosObservable.setAll(socioService.buscar(texto));
+
+      if(mostrandoMorosos){
+        sociosObservable.setAll(
+            socioService.obtenerMorosos(LocalDate.now()).stream()
+                .filter(s -> s.coincideCon(texto))
+                .toList()
+        );
+      }else {
+        sociosObservable.setAll(socioService.buscar(texto));
+      }
     });
   }
+
+  public void mostrarTodos(){
+    mostrandoMorosos = false;
+    sociosObservable.setAll(socioService.obtenerTodos());
+  }
+
+  public void mostrarMorosos() {
+    mostrandoMorosos = true;
+    sociosObservable.setAll(socioService.obtenerMorosos(LocalDate.now()));
+  }
+
 }

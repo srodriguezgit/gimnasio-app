@@ -50,4 +50,9 @@ public class SocioService implements ISocioService {
     socios.add(socio);
   }
 
+  public void altaSocioConPago(Socio socio, Pago pago){
+    agregarSocio(socio);
+    socio.registrarPago(pago);
+  }
+
 }

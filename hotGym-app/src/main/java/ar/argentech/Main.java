@@ -3,7 +3,9 @@ package ar.argentech;
 import ar.argentech.domain.DuracionPlan;
 import ar.argentech.domain.Plan;
 import ar.argentech.domain.Socio;
+import ar.argentech.services.impl.PlanService;
 import ar.argentech.services.impl.SocioService;
+import ar.argentech.ui.MainController;
 import ar.argentech.ui.MainView;
 import ar.argentech.ui.SocioController;
 import java.math.BigDecimal;
@@ -19,6 +21,7 @@ public class Main extends Application {
   public void start(Stage stage) {
     // Service
     SocioService socioService = new SocioService();
+    PlanService planService = new PlanService();
 
     // Datos de prueba
     Plan mensual = new Plan(null, "Mensual",
@@ -33,9 +36,9 @@ public class Main extends Application {
 
     // UI
     MainView view = new MainView();
-    new SocioController(view, socioService);
+    new MainController(view, socioService, planService);
 
-    Scene scene = new Scene(view, 800, 400);
+    Scene scene = new Scene(view, 900, 500);
     stage.setTitle("Gestión de Gimnasio");
     stage.setScene(scene);
     stage.show();

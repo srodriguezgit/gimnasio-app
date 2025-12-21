@@ -25,7 +25,7 @@ public class Socio {
   private List<Pago> pagos = new ArrayList<>();
 
   public boolean esMoroso(LocalDate fecha){
-    return fechaProximoVencimiento !=null && fechaProximoVencimiento.isAfter(fecha);
+    return fechaProximoVencimiento !=null && fechaProximoVencimiento.isBefore(fecha);
   }
 
   public boolean esMoroso(){

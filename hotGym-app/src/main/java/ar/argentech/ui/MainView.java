@@ -2,26 +2,34 @@ package ar.argentech.ui;
 
 import ar.argentech.domain.Socio;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class MainView extends BorderPane {
 
-  public TextField txtBuscar = new TextField();
-  public Button btnBuscar = new Button("Buscar");
-  public TableView<Socio> tablaSocios = new TableView<>();
+  private final MenuBar menuBar = new MenuBar();
+  private final VBox leftMenu = new VBox(10);
 
   public MainView() {
+    setTop(menuBar);
+    setLeft(leftMenu);
+  }
 
-    txtBuscar.setPromptText("Buscar por nombre o DNI");
+  public MenuBar getMenuBar() {
+    return menuBar;
+  }
 
-    HBox topBar = new HBox(10, txtBuscar, btnBuscar);
-    topBar.setPadding(new Insets(10));
+  public VBox getLeftMenu() {
+    return leftMenu;
+  }
 
-    setTop(topBar);
-    setCenter(tablaSocios);
+  public void setContenido(Node node) {
+    setCenter(node);
   }
 }
