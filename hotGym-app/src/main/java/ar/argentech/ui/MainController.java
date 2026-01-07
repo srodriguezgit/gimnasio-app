@@ -17,7 +17,7 @@ public class MainController {
   public MainController(MainView mainView, SocioService socioService, PlanService planService) {
     this.mainView = mainView;
     this.socioService = socioService;
-    this.planService = new PlanService();
+    this.planService = planService;
 
     configurarMenu();
     mostrarHome();
@@ -48,7 +48,7 @@ public class MainController {
 
   private void mostrarSocios() {
     SociosView sociosView = new SociosView();
-    socioController = new SocioController(sociosView, socioService);
+    socioController = new SocioController(sociosView, socioService, planService);
     mainView.setContenido(sociosView);
   }
 

@@ -33,9 +33,17 @@ public class Socio {
   }
 
   public void registrarPago(Pago pago){
+
+    if (pagos == null) pagos = new ArrayList<>();
+
+    System.out.println("fechaPago = " + pago.getFechaPago());
+
     pagos.add(pago);
     fechaUltimoPago = pago.getFechaPago();
+    System.out.println("fechaUltimoPago = " + fechaUltimoPago);
+
     fechaProximoVencimiento = planActual.getDuracionPlan().calcularVencimiento(fechaUltimoPago);
+    System.out.println("fechaProximoVencimiento = " + fechaProximoVencimiento);
   }
 
   public boolean coincideCon(String texto){

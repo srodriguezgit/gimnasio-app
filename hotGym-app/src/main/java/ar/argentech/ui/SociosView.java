@@ -12,13 +12,14 @@ public class SociosView extends BorderPane {
 
   public TextField txtBuscar = new TextField();
   public Button btnBuscar = new Button("Buscar");
+  public Button btnEditar = new Button("Editar");
   public TableView<Socio> tablaSocios = new TableView<>();
 
   public SociosView() {
 
     txtBuscar.setPromptText("Buscar por nombre o DNI");
 
-    HBox topBar = new HBox(10, txtBuscar, btnBuscar);
+    HBox topBar = new HBox(10, txtBuscar, btnBuscar, btnEditar);
     topBar.setPadding(new Insets(10));
 
     setTop(topBar);

@@ -7,6 +7,7 @@ import ar.argentech.services.impl.PlanService;
 import ar.argentech.services.impl.SocioService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class NuevoSocioController {private final NuevoSocioView view;
   private final SocioService socioService;
@@ -15,7 +16,7 @@ public class NuevoSocioController {private final NuevoSocioView view;
   public NuevoSocioController(NuevoSocioView view, SocioService socioService, PlanService planService) {
     this.view = view;
     this.socioService = socioService;
-    this.planService = new PlanService();
+    this.planService = planService;
 
     cargarPlanes();
     configurarEventos();
@@ -53,7 +54,7 @@ public class NuevoSocioController {private final NuevoSocioView view;
         LocalDate.now(),
         null,
         null,
-        null
+        new ArrayList<>()
     );
 
     Pago pago = new Pago(null,

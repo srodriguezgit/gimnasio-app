@@ -3,6 +3,8 @@ package ar.argentech.ui;
 import ar.argentech.domain.MetodoPago;
 import ar.argentech.domain.Plan;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -14,6 +16,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.util.StringConverter;
 
 public class NuevoSocioView extends BorderPane {
 
@@ -22,12 +25,15 @@ public class NuevoSocioView extends BorderPane {
   public TextField txtDni = new TextField();
   public ComboBox<Plan> cmbPlan = new ComboBox<>();
 
-  public DatePicker dpFechaPago = new DatePicker(LocalDate.now());
+  public DatePicker dpFechaPago = new DatePicker();
   public TextField txtMonto = new TextField();
   public ComboBox<MetodoPago> cmbMetodoPago = new ComboBox<>();
 
   public Button btnRegistrar = new Button("Registrar socio");
   public Button btnCancelar = new Button("Cancelar");
+
+  private static final DateTimeFormatter AR_DATE =
+      DateTimeFormatter.ofPattern("d/M/yyyy");
 
   public NuevoSocioView() {
 
@@ -72,6 +78,38 @@ public class NuevoSocioView extends BorderPane {
     setCenter(form);
     setBottom(botones);
     BorderPane.setMargin(botones, new Insets(10));
+    configurarDatePickerAR(dpFechaPago);
+  }
+
+  private static void configurarDatePickerAR(DatePicker dp) {
+
+    dp.setPromptText("dd/MM/yyyy");
+
+    dp.setConverter(new StringConverter<>() {
+      @Override
+      public String toString(LocalDate date) {
+        return (date == null) ? "" : AR_DATE.format(date);
+      }
+
+      @Override
+      public LocalDate fromString(String text) {
+        if (text == null || text.isBlank()) return null;
+        try {
+          return LocalDate.parse(text.trim(), AR_DATE);
+        } catch (DateTimeParseException ex) {
+          // Si el usuario escribió cualquier cosa, no rompemos: dejamos el valor anterior
+          return dp.getValue();
+        }
+      }
+    });
+
+    dp.getEditor().focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+      if (!isFocused) {
+        String text = dp.getEditor().getText();
+        LocalDate parsedDate = dp.getConverter().fromString(text);
+        dp.setValue(parsedDate);
+      }
+    });
   }
 
 }
