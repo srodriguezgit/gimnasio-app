@@ -45,7 +45,10 @@ public class SocioController {
     TableColumn<Socio, String> colApellido = new TableColumn<>("Apellido");
     colApellido.setCellValueFactory(new PropertyValueFactory<>("apellido"));
 
-    view.tablaSocios.getColumns().addAll(colDni, colNombre, colApellido);
+    TableColumn<Socio, String> colVencimiento = new TableColumn<>("Fecha Vencimiento");
+    colVencimiento.setCellValueFactory(new PropertyValueFactory<>("fechaProximoVencimiento"));
+
+    view.tablaSocios.getColumns().addAll(colDni, colNombre, colApellido, colVencimiento);
     view.tablaSocios.setItems(sociosObservable);
   }
 
@@ -80,6 +83,16 @@ public class SocioController {
 
       abrirModalEditar(seleccionado);
     });
+
+    view.btnCongelar.setOnAction(e -> {
+      Socio seleccionado = view.tablaSocios.getSelectionModel().getSelectedItem();
+      if (seleccionado == null) {
+        new Alert(Alert.AlertType.WARNING, "Seleccioná un socio").showAndWait();
+        return;
+      }
+
+      abrirModalCongelar(seleccionado);
+    });
   }
 
   public void mostrarTodos(){
@@ -108,6 +121,23 @@ public class SocioController {
     modal.initModality(Modality.APPLICATION_MODAL);
     modal.setTitle("Editar socio");
     modal.setScene(new Scene(editView, 450, 320));
+    modal.showAndWait();
+  }
+
+  private void abrirModalCongelar(Socio socio) {
+    CongelarCuotaView v = new CongelarCuotaView();
+
+    Runnable refrescar = () -> {
+      if (mostrandoMorosos) mostrarMorosos();
+      else mostrarTodos();
+    };
+
+    new CongelarCuotaController(v, socioService, socio, refrescar);
+
+    Stage modal = new Stage();
+    modal.initModality(Modality.APPLICATION_MODAL);
+    modal.setTitle("Congelar cuota");
+    modal.setScene(new Scene(v, 450, 260));
     modal.showAndWait();
   }
 

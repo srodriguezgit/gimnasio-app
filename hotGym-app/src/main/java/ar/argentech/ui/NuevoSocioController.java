@@ -54,6 +54,7 @@ public class NuevoSocioController {private final NuevoSocioView view;
         LocalDate.now(),
         null,
         null,
+        new ArrayList<>(),
         new ArrayList<>()
     );
 

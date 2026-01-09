@@ -3,6 +3,8 @@ package ar.argentech.ui;
 import ar.argentech.services.IPlanService;
 import ar.argentech.services.impl.PlanService;
 import ar.argentech.services.impl.SocioService;
+import ar.argentech.ui.pagos.PagosController;
+import ar.argentech.ui.pagos.PagosView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 
@@ -40,6 +42,19 @@ public class MainController {
       new NuevoSocioController(view, socioService, planService);
       mainView.setContenido(view);
     });
+
+    Menu menuPagos = new Menu("Pagos");
+    MenuItem itemVerPagos = new MenuItem("Ver pagos");
+    menuPagos.getItems().add(itemVerPagos);
+
+    mainView.getMenuBar().getMenus().add(menuPagos);
+
+    itemVerPagos.setOnAction(e -> {
+      PagosView v = new PagosView();
+      new PagosController(v, socioService);
+      mainView.setContenido(v);
+    });
+
   }
 
   private void mostrarHome() {

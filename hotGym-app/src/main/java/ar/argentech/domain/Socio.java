@@ -23,6 +23,7 @@ public class Socio {
   private LocalDate fechaProximoVencimiento;
 
   private List<Pago> pagos = new ArrayList<>();
+  private List< Congelacion> congelaciones = new ArrayList<>();
 
   public boolean esMoroso(LocalDate fecha){
     return fechaProximoVencimiento !=null && fechaProximoVencimiento.isBefore(fecha);
@@ -69,6 +70,21 @@ public class Socio {
       }
     }
     return true;
+  }
+
+  public void aplicarCongelacion(Congelacion congelacion){
+
+    if(congelacion==null) throw new IllegalArgumentException("No se puede aplicar congelacion: MOTIVO NULL");
+    if(congelacion.getDias() <=0) throw new IllegalArgumentException("Los dias deben ser mayores a 0(cero)");
+
+
+    if(congelaciones==null) congelaciones = new ArrayList<>();
+    congelaciones.add(congelacion);
+
+    if(fechaProximoVencimiento!=null){
+      fechaProximoVencimiento = fechaProximoVencimiento.plusDays(congelacion.getDias());
+    }
+
   }
 
 }

@@ -28,8 +28,8 @@ public class Main extends Application {
         new BigDecimal("40000"),
         DuracionPlan.MENSUAL);
 
-    Socio s1 = new Socio(null, "Juan", "Perez", "30123456", null, mensual, LocalDate.now(), null, null, null);
-    Socio s2 = new Socio(null, "Juan", "Carrillo", "28999888", null, mensual, LocalDate.now(), null, null, null);
+    Socio s1 = new Socio(null, "Juan", "Perez", "30123456", null, mensual, LocalDate.now(), null, null, null, null);
+    Socio s2 = new Socio(null, "Juan", "Carrillo", "28999888", null, mensual, LocalDate.now(), null, null, null, null);
 
     socioService.agregarSocio(s1);
     socioService.agregarSocio(s2);
