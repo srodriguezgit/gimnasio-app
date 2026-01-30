@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableColumn;
 
 public class PagosController {
@@ -56,7 +57,11 @@ public class PagosController {
   }
 
   private void configurarEventos() {
-    view.btnFiltrar.setOnAction(e -> filtrar());
+    view.btnFiltrar.setOnAction(e -> {
+      commitDatePicker(view.dpDesde);
+      commitDatePicker(view.dpHasta);
+      filtrar();
+  });
     view.btnLimpiar.setOnAction(e -> {
       view.dpDesde.setValue(null);
       view.dpHasta.setValue(null);
@@ -109,5 +114,19 @@ public class PagosController {
     view.lblEfectivo.setText("Efectivo: $" + efectivo);
     view.lblTransferencia.setText("Transferencia: $" + transf);
     view.lblTarjeta.setText("Tarjeta: $" + tarjeta);
+  }
+
+  private void commitDatePicker(DatePicker dp) {
+    String text = dp.getEditor().getText();
+    if (text == null || text.isBlank()) {
+      dp.setValue(null);
+      return;
+    }
+    try {
+      LocalDate parsed = dp.getConverter().fromString(text);
+      dp.setValue(parsed);
+    } catch (Exception e) {
+      // Si es inválida, dejamos el valor como estaba
+    }
   }
 }

@@ -3,10 +3,14 @@ package ar.argentech.ui;
 import ar.argentech.domain.Socio;
 import ar.argentech.services.impl.PlanService;
 import ar.argentech.services.impl.SocioService;
+import ar.argentech.ui.pagos.RegistrarPagoController;
+import ar.argentech.ui.pagos.RegistrarPagoView;
 import java.time.LocalDate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.Scene;
@@ -93,6 +97,48 @@ public class SocioController {
 
       abrirModalCongelar(seleccionado);
     });
+
+    view.btnRegistrarPago.setOnAction(e -> {
+      Socio seleccionado = view.tablaSocios.getSelectionModel().getSelectedItem();
+      if (seleccionado == null) {
+        new Alert(Alert.AlertType.WARNING, "Seleccioná un socio").showAndWait();
+        return;
+      }
+
+      abrirModalRegistrarPago(seleccionado);
+    });
+
+    view.btnEliminar.disableProperty().bind(
+        view.tablaSocios.getSelectionModel().selectedItemProperty().isNull()
+    );
+
+    view.btnEliminar.setOnAction(e -> {
+      Socio seleccionado = view.tablaSocios.getSelectionModel().getSelectedItem();
+      if (seleccionado == null) return;
+
+      Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+      confirm.setTitle("Confirmar eliminación");
+      confirm.setHeaderText("¿Eliminar al socio " + seleccionado.getNombre() + " " + seleccionado.getApellido() + "?");
+      confirm.setContentText("Esta acción no se puede deshacer.");
+
+      ButtonType btnSi = new ButtonType("Eliminar", ButtonBar.ButtonData.OK_DONE);
+      ButtonType btnNo = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+      confirm.getButtonTypes().setAll(btnSi, btnNo);
+
+      confirm.showAndWait().ifPresent(res -> {
+        if (res == btnSi) {
+          boolean eliminado = socioService.eliminarPorId(seleccionado.getId());
+          if (!eliminado) {
+            new Alert(Alert.AlertType.ERROR, "No se pudo eliminar (no encontrado).").showAndWait();
+          }
+
+          // refrescar vista actual
+          if (mostrandoMorosos) mostrarMorosos();
+          else mostrarTodos();
+        }
+      });
+    });
+
   }
 
   public void mostrarTodos(){
@@ -138,6 +184,33 @@ public class SocioController {
     modal.initModality(Modality.APPLICATION_MODAL);
     modal.setTitle("Congelar cuota");
     modal.setScene(new Scene(v, 450, 260));
+    modal.showAndWait();
+  }
+
+  private void abrirModalRegistrarPago(Socio socio) {
+
+    // 1) Vista del modal
+    RegistrarPagoView v = new RegistrarPagoView();
+
+    // 2) Callback para refrescar la tabla cuando se registra el pago
+    Runnable refrescar = () -> {
+      if (mostrandoMorosos) {
+        mostrarMorosos();
+      } else {
+        mostrarTodos();
+      }
+    };
+
+    // 3) Controller del modal (conecta eventos y lógica)
+    new RegistrarPagoController(v, socioService, socio, refrescar);
+
+    // 4) Stage modal
+    Stage modal = new Stage();
+    modal.initModality(Modality.APPLICATION_MODAL);
+    modal.setTitle("Registrar pago");
+    modal.setScene(new Scene(v, 450, 260));
+
+    // 5) Mostrar y esperar (bloquea hasta que se cierre)
     modal.showAndWait();
   }
 

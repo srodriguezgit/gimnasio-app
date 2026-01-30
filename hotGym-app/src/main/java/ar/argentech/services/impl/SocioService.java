@@ -13,6 +13,7 @@ import java.util.Optional;
 public class SocioService implements ISocioService {
 
   private final List<Socio> socios = new ArrayList<>();
+  private long nextId = 1;
 
   @Override
   public List<Socio> obtenerTodos() {
@@ -49,6 +50,7 @@ public class SocioService implements ISocioService {
   }
 
   public void agregarSocio(Socio socio) {
+    socio.setId(nextId++);
     socios.add(socio);
   }
 
@@ -105,6 +107,10 @@ public class SocioService implements ISocioService {
         .filter(r -> (desde == null || !r.getFecha().isBefore(desde)))
         .filter(r -> (hasta == null || !r.getFecha().isAfter(hasta)))
         .toList();
+  }
+
+  public boolean eliminarPorId(Long id) {
+    return socios.removeIf(s -> s.getId().equals(id));
   }
 
 }
