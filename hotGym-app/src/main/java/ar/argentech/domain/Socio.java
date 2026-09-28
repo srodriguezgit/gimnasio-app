@@ -33,18 +33,44 @@ public class Socio {
     return esMoroso(LocalDate.now());
   }
 
-  public void registrarPago(Pago pago){
+  public void registrarPago(Pago pago) {
+    if (pago == null) {
+      throw new IllegalArgumentException("El pago es obligatorio.");
+    }
+    if (pago.getFechaPago() == null) {
+      throw new IllegalArgumentException("La fecha de pago es obligatoria.");
+    }
+    if (pago.getMonto() == null || pago.getMonto().signum() <= 0) {
+      throw new IllegalArgumentException("El monto debe ser mayor a cero.");
+    }
+    if (pago.getMetodoPago() == null) {
+      throw new IllegalArgumentException("El método de pago es obligatorio.");
+    }
+    if (planActual == null || planActual.getDuracionPlan() == null) {
+      throw new IllegalStateException(
+          "El socio debe tener un plan con duración definida."
+      );
+    }
 
-    if (pagos == null) pagos = new ArrayList<>();
+    LocalDate fechaBase = fechaProximoVencimiento != null
+        ? fechaProximoVencimiento
+        : pago.getFechaPago();
 
-    System.out.println("fechaPago = " + pago.getFechaPago());
+    LocalDate nuevoVencimiento =
+        planActual.getDuracionPlan().calcularVencimiento(fechaBase);
+
+    if (pagos == null) {
+      pagos = new ArrayList<>();
+    }
 
     pagos.add(pago);
-    fechaUltimoPago = pago.getFechaPago();
-    System.out.println("fechaUltimoPago = " + fechaUltimoPago);
+    fechaProximoVencimiento = nuevoVencimiento;
 
-    fechaProximoVencimiento = planActual.getDuracionPlan().calcularVencimiento(fechaUltimoPago);
-    System.out.println("fechaProximoVencimiento = " + fechaProximoVencimiento);
+    // Cargar un cobro antiguo no debe retroceder la fecha del último pago.
+    if (fechaUltimoPago == null
+        || pago.getFechaPago().isAfter(fechaUltimoPago)) {
+      fechaUltimoPago = pago.getFechaPago();
+    }
   }
 
   public boolean coincideCon(String texto){
@@ -55,9 +81,14 @@ public class Socio {
 
     String[] palabras = texto.toLowerCase().trim().split("\\s+");
 
-    String dniNorm = dni.toLowerCase();
-    String nombreNorm = nombre.toLowerCase();
-    String apellidoNorm = apellido.toLowerCase();
+    String dniNorm = dni == null
+        ? "" : dni.toLowerCase(java.util.Locale.ROOT);
+
+    String nombreNorm = nombre == null
+        ? "" : nombre.toLowerCase(java.util.Locale.ROOT);
+
+    String apellidoNorm = apellido == null
+        ? "" : apellido.toLowerCase(java.util.Locale.ROOT);
 
     for (String palabra : palabras) {
       boolean coincide =
@@ -85,6 +116,35 @@ public class Socio {
       fechaProximoVencimiento = fechaProximoVencimiento.plusDays(congelacion.getDias());
     }
 
+  }
+
+  public boolean estaCongelado(LocalDate fecha) {
+    if (fecha == null) {
+      throw new IllegalArgumentException("La fecha es obligatoria.");
+    }
+
+    if (congelaciones == null) {
+      return false;
+    }
+
+    return congelaciones.stream().anyMatch(congelacion ->
+        !fecha.isBefore(congelacion.getFechaDesde())
+            && fecha.isBefore(congelacion.getFechaHasta())
+    );
+  }
+
+  public boolean tieneCuotaVigente(LocalDate fecha) {
+    if (fecha == null) {
+      throw new IllegalArgumentException("La fecha es obligatoria.");
+    }
+
+    return fechaProximoVencimiento != null
+        && !fechaProximoVencimiento.isBefore(fecha)
+        && (fechaInicio == null || !fecha.isBefore(fechaInicio));
+  }
+
+  public boolean puedeIngresar(LocalDate fecha) {
+    return tieneCuotaVigente(fecha) && !estaCongelado(fecha);
   }
 
 }

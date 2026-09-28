@@ -1,27 +1,27 @@
 package ar.argentech.services.impl;
 
-import ar.argentech.domain.DuracionPlan;
 import ar.argentech.domain.Plan;
+import ar.argentech.repository.IPlanRepository;
+import ar.argentech.repository.PlanRepository;
 import ar.argentech.services.IPlanService;
-import java.math.BigDecimal;
-import java.util.ArrayList;
+
 import java.util.List;
+import java.util.Objects;
 
 public class PlanService implements IPlanService {
 
-  private final List<Plan> planes = new ArrayList<>();
+  private final IPlanRepository planRepository;
 
   public PlanService() {
-    // datos mock iniciales
-    planes.add(new Plan(null, "Mensual",
-        new BigDecimal("40000"), DuracionPlan.MENSUAL));
+    this(new PlanRepository());
+  }
 
-    planes.add(new Plan(null, "Quincenal",
-        new BigDecimal("25000"), DuracionPlan.QUINCENA));
+  public PlanService(IPlanRepository planRepository) {
+    this.planRepository = Objects.requireNonNull(planRepository);
   }
 
   @Override
   public List<Plan> obtenerPlanes() {
-    return new ArrayList<>(planes);
+    return planRepository.buscarActivos();
   }
 }

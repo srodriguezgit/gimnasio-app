@@ -26,48 +26,147 @@ public class RegistrarPagoController {
     this.socio = socio;
     this.onRegistrado = onRegistrado;
 
-    // Info arriba
-    view.lblSocio.setText(socio.getNombre() + " " + socio.getApellido() + " (DNI " + socio.getDni() + ")");
+    view.lblSocio.setText(
+        socio.getNombre() + " " + socio.getApellido()
+            + " (DNI " + socio.getDni() + ")"
+    );
 
-    // Precargar monto con el costo del plan si existe
-    if (socio.getPlanActual() != null && socio.getPlanActual().getCosto() != null) {
-      view.txtMonto.setText(socio.getPlanActual().getCosto().toString());
+    try {
+      var cuotas = socioService.obtenerCuotas(socio.getDni());
+
+      view.cmbCuota.getItems().setAll(
+          cuotas.stream()
+              .filter(q -> q.getSaldo().signum() > 0)
+              .toList()
+      );
+
+      view.cmbOperacion.valueProperty().addListener(
+          (obs, anterior, actual) -> actualizarOperacion()
+      );
+
+      view.cmbCuota.valueProperty().addListener(
+          (obs, anterior, actual) -> actualizarOperacion()
+      );
+
+      if (!view.cmbCuota.getItems().isEmpty()) {
+        view.cmbCuota.getSelectionModel().selectFirst();
+      }
+
+      view.cmbOperacion.setValue(
+          view.cmbCuota.getItems().isEmpty()
+              ? "Renovar cuota"
+              : "Abonar saldo"
+      );
+
+    } catch (RuntimeException e) {
+      view.lblResumen.setText(
+          "No se pudieron cargar las cuotas: " + e.getMessage()
+      );
+
+      view.btnRegistrar.setDisable(true);
     }
 
     configurarEventos();
   }
 
+  private void actualizarOperacion() {
+    boolean saldo = "Abonar saldo".equals(
+        view.cmbOperacion.getValue()
+    );
+
+    view.cmbCuota.setDisable(!saldo);
+
+    if (saldo) {
+      var cuota = view.cmbCuota.getValue();
+
+      view.btnRegistrar.setDisable(cuota == null);
+
+      view.txtMonto.setText(
+          cuota == null ? "" : cuota.getSaldo().toPlainString()
+      );
+
+      view.lblResumen.setText(
+          cuota == null
+              ? "No hay cuotas pendientes registradas."
+              : "Importe acordado: $"
+              + cuota.getImporte().toPlainString()
+              + " · Abonado: $"
+              + cuota.getAbonado().toPlainString()
+              + " · Pendiente: $"
+              + cuota.getSaldo().toPlainString()
+              + "\nEste cobro no modifica el vencimiento."
+      );
+
+    } else {
+      boolean sinPlan = socio.getPlanActual() == null;
+
+      view.btnRegistrar.setDisable(sinPlan);
+
+      view.txtMonto.setText(
+          sinPlan
+              ? ""
+              : socio.getPlanActual().getCosto().toPlainString()
+      );
+
+      view.lblResumen.setText(
+          sinPlan
+              ? "El socio no tiene un plan."
+              : "Cuota completa: $"
+              + socio.getPlanActual().getCosto().toPlainString()
+              + ". Podés abonar una parte: se habilita "
+              + "el período y queda saldo pendiente."
+              + "\nLos pagos anteriores a esta versión "
+              + "no tienen deuda calculada."
+      );
+    }
+  }
+
   private void configurarEventos() {
-
     view.btnCancelar.setOnAction(e -> cerrar());
-
     view.btnRegistrar.setOnAction(e -> registrar());
   }
 
   private void registrar() {
-
     LocalDate fecha = view.dpFechaPago.getValue();
+
     if (fecha == null) {
-      new Alert(Alert.AlertType.ERROR, "Seleccioná una fecha de pago.").showAndWait();
+      new Alert(
+          Alert.AlertType.ERROR,
+          "Seleccioná una fecha de pago."
+      ).showAndWait();
       return;
     }
 
     if (view.cmbMetodoPago.getValue() == null) {
-      new Alert(Alert.AlertType.ERROR, "Seleccioná un método de pago.").showAndWait();
+      new Alert(
+          Alert.AlertType.ERROR,
+          "Seleccioná un método de pago."
+      ).showAndWait();
       return;
     }
 
     BigDecimal monto;
+
     try {
-      String raw = view.txtMonto.getText().trim().replace(",", ".");
+      String raw = view.txtMonto.getText()
+          .trim()
+          .replace(",", ".");
+
       monto = new BigDecimal(raw);
+
     } catch (Exception ex) {
-      new Alert(Alert.AlertType.ERROR, "Monto inválido.").showAndWait();
+      new Alert(
+          Alert.AlertType.ERROR,
+          "Monto inválido."
+      ).showAndWait();
       return;
     }
 
     if (monto.compareTo(BigDecimal.ZERO) <= 0) {
-      new Alert(Alert.AlertType.ERROR, "El monto debe ser mayor a 0.").showAndWait();
+      new Alert(
+          Alert.AlertType.ERROR,
+          "El monto debe ser mayor a 0."
+      ).showAndWait();
       return;
     }
 
@@ -79,15 +178,43 @@ public class RegistrarPagoController {
     );
 
     try {
-      socioService.registrarPago(socio.getDni(), pago);
+      view.btnRegistrar.setDisable(true);
 
-      new Alert(Alert.AlertType.INFORMATION, "Pago registrado ✅").showAndWait();
+      if ("Abonar saldo".equals(view.cmbOperacion.getValue())) {
+        if (view.cmbCuota.getValue() == null) {
+          throw new IllegalArgumentException(
+              "Seleccioná una cuota."
+          );
+        }
+
+        socioService.abonarSaldo(
+            socio.getDni(),
+            view.cmbCuota.getValue().getId(),
+            pago
+        );
+
+      } else {
+        socioService.registrarPago(socio.getDni(), pago);
+      }
+
+      new Alert(
+          Alert.AlertType.INFORMATION,
+          "Pago registrado ✅"
+      ).showAndWait();
 
       cerrar();
-      if (onRegistrado != null) onRegistrado.run();
+
+      if (onRegistrado != null) {
+        onRegistrado.run();
+      }
 
     } catch (Exception ex) {
-      new Alert(Alert.AlertType.ERROR, "Error: " + ex.getMessage()).showAndWait();
+      view.btnRegistrar.setDisable(false);
+
+      new Alert(
+          Alert.AlertType.ERROR,
+          "Error: " + ex.getMessage()
+      ).showAndWait();
     }
   }
 

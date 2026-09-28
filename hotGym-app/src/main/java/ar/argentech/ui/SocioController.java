@@ -16,6 +16,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.scene.control.TableRow;
+import javafx.scene.input.MouseButton;
+import ar.argentech.domain.Sesion;
 
 public class SocioController {
 
@@ -139,6 +142,67 @@ public class SocioController {
       });
     });
 
+    view.btnHistorial.disableProperty().bind(
+        view.tablaSocios.getSelectionModel()
+            .selectedItemProperty()
+            .isNull()
+    );
+
+    view.btnHistorial.setOnAction(e -> {
+      Socio seleccionado =
+          view.tablaSocios.getSelectionModel().getSelectedItem();
+
+      if (seleccionado != null) {
+        abrirHistorial(seleccionado);
+      }
+    });
+
+    view.tablaSocios.setRowFactory(tabla -> {
+      TableRow<Socio> fila = new TableRow<>();
+
+      fila.setOnMouseClicked(evento -> {
+        if (evento.getButton() == MouseButton.PRIMARY
+            && evento.getClickCount() == 2
+            && !fila.isEmpty()) {
+
+          abrirHistorial(fila.getItem());
+        }
+      });
+
+      return fila;
+    });
+
+    view.btnVencimiento.setVisible(Sesion.isAdmin());
+    view.btnVencimiento.setManaged(Sesion.isAdmin());
+
+    view.btnVencimiento.disableProperty().bind(
+        view.tablaSocios.getSelectionModel()
+            .selectedItemProperty()
+            .isNull()
+    );
+
+    view.btnVencimiento.setOnAction(e -> {
+      Socio seleccionado =
+          view.tablaSocios.getSelectionModel().getSelectedItem();
+
+      if (seleccionado == null) {
+        return;
+      }
+
+      AjustarVencimientoDialog.mostrar(
+          seleccionado,
+          socioService,
+          view.getScene().getWindow(),
+          () -> {
+            if (mostrandoMorosos) {
+              mostrarMorosos();
+            } else {
+              mostrarTodos();
+            }
+          }
+      );
+    });
+
   }
 
   public void mostrarTodos(){
@@ -161,7 +225,13 @@ public class SocioController {
       else mostrarTodos();
     };
 
-    new EditarSocioController(editView, seleccionado, planService, refrescar);
+    new EditarSocioController(
+        editView,
+        seleccionado,
+        planService,
+        socioService,
+        refrescar
+    );
 
     Stage modal = new Stage();
     modal.initModality(Modality.APPLICATION_MODAL);
@@ -208,10 +278,53 @@ public class SocioController {
     Stage modal = new Stage();
     modal.initModality(Modality.APPLICATION_MODAL);
     modal.setTitle("Registrar pago");
-    modal.setScene(new Scene(v, 450, 260));
+    modal.setScene(new Scene(v, 620, 450));
 
     // 5) Mostrar y esperar (bloquea hasta que se cierre)
     modal.showAndWait();
+  }
+
+  private void abrirHistorial(Socio seleccionado) {
+    try {
+      // Consultamos nuevamente la base para mostrar datos actualizados.
+      Socio actualizado = socioService.obtenerTodos().stream()
+          .filter(s -> s.getId().equals(seleccionado.getId()))
+          .findFirst()
+          .orElseThrow(() -> new IllegalArgumentException(
+              "El socio ya no está disponible en el listado activo."
+          ));
+
+      var cuotas = socioService.obtenerCuotas(
+          actualizado.getDni()
+      );
+
+      HistorialSocioView historial =
+          new HistorialSocioView(actualizado, cuotas);
+
+      historial.agregarCambiosVencimiento(
+          socioService.obtenerCambiosVencimiento(actualizado.getId())
+      );
+
+      Stage ventana = new Stage();
+      ventana.initOwner(view.getScene().getWindow());
+      ventana.initModality(Modality.WINDOW_MODAL);
+
+      ventana.setTitle(
+          "Historial de "
+              + actualizado.getNombre()
+              + " "
+              + actualizado.getApellido()
+      );
+
+      ventana.setScene(new Scene(historial, 1000, 600));
+      ventana.showAndWait();
+
+    } catch (RuntimeException e) {
+      new Alert(
+          Alert.AlertType.ERROR,
+          "No se pudo abrir el historial: " + e.getMessage()
+      ).showAndWait();
+    }
   }
 
 }
